@@ -45,28 +45,28 @@ gender = None
 if audio_file is not None:
     st.audio(audio_file, format="audio/wav")
     
+    # Extrair as features do áudio sempre que o arquivo for alterado
+    features = extract_features(audio_file)
+    
     # Adicionar um selectbox para o kernel do modelo
     kernel = st.selectbox("Escolha o kernel do modelo", ["linear", "rbf", "poly", "sigmoid"])
     model = models[kernel]  # Escolher o modelo conforme o kernel selecionado
 
-    # Adicionar um botão para extrair features e prever
-    if st.button("Fazer Previsão"):
-        # Extrair as features do áudio
-        features = extract_features(audio_file)
+    # Adicionar um botão para fazer a previsão
+    if st.button("Fazer Previsão") and features is not None:
+        # Escalonar as features
+        features_scaled = scaler.transform([features])
         
-        if features is not None and len(features) == 20:
-            # Escalonar as features
-            features_scaled = scaler.transform([features])
-            
-            # Fazer a previsão
-            prediction = model.predict(features_scaled)
-            gender = "Masculino" if prediction[0] == 0 else "Feminino"
-            
-            # Probabilidades (se suportadas)
-            if hasattr(model, "predict_proba"):
-                probabilities = model.predict_proba(features_scaled)
-                st.write(f"Probabilidades: Masculino: {probabilities[0][0]:.2f}, Feminino: {probabilities[0][1]:.2f}")
-            
-            st.success(f"Gênero classificado: **{gender}**")
-        else:
+        # Fazer a previsão
+        prediction = model.predict(features_scaled)
+        gender = "Masculino" if prediction[0] == 0 else "Feminino"
+        
+        # Probabilidades (se suportadas)
+        if hasattr(model, "predict_proba"):
+            probabilities = model.predict_proba(features_scaled)
+            st.write(f"Probabilidades: Masculino: {probabilities[0][0]:.2f}, Feminino: {probabilities[0][1]:.2f}")
+        
+        st.success(f"Gênero classificado: **{gender}**")
+    else:
+        if features is None:
             st.error("Erro ao processar o áudio. Certifique-se de que o áudio tenha 20 características.")
