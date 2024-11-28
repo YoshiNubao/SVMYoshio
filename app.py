@@ -81,4 +81,6 @@ if audio_file is not None:
                 st.success(f"Gênero classificado: **{gender}**")
 
         except ValueError as e:
-            st.error(f"Erro: {
+            st.error(f"Erro: {e}")
+        except Exception as e:
+            st.error(f"Erro ao processar o áudio: {e}")
