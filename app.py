@@ -7,39 +7,32 @@ import librosa
 models = {kernel: joblib.load(f"svm_model_{kernel}.pkl") for kernel in ["linear", "rbf", "poly", "sigmoid"]}
 scaler = joblib.load("scaler.pkl")
 
-# Função para extrair características fixas do áudio
 def extract_features(audio_file, max_length=20):
     try:
-        # Carregar o áudio
-        y, sr = librosa.load(audio_file, duration=30)
+        y, sr = librosa.load(audio_file, duration=30)  # Carregar o áudio com duração de 30s
         st.write(f"Forma do áudio: {y.shape}, Taxa de amostragem: {sr}")  # Debug
-
-        # Extrair as MFCCs
-        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)  # Extrair MFCCs
         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
         spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr)
+        
+        # Padding ou corte para garantir que temos exatamente `max_length` MFCCs
+        if mfcc.shape[1] < max_length:
+            pad_width = max_length - mfcc.shape[1]
+            mfcc = np.pad(mfcc, ((0, 0), (0, pad_width)), mode='constant')
+        else:
+            mfcc = mfcc[:, :max_length]
 
-        # Concatenar as features
+        # Média das características extraídas
         features = np.hstack([
-            np.mean(mfcc, axis=1),
-            np.mean(chroma, axis=1),
+            np.mean(mfcc, axis=1), 
+            np.mean(chroma, axis=1), 
             np.mean(spectral_contrast, axis=1)
         ])
-        
+
         st.write(f"Features extraídas: {features}")  # Debug
-
-        # Garantir que o número de características seja fixo
-        if features.shape[0] < max_length:
-            pad_width = max_length - features.shape[0]
-            features = np.pad(features, (0, pad_width), mode='constant')
-        else:
-            features = features[:max_length]
-
-        st.write(f"Features após padding ou corte: {features}")  # Debug
         return features
     except Exception as e:
         raise ValueError(f"Erro ao processar o áudio: {e}")
-
 
 # Interface do Streamlit
 st.title("Classificação de Gênero por Voz")
@@ -57,9 +50,11 @@ if audio_file is not None:
 
     if st.button("Fazer Previsão"):
         try:
-            # Extrai as features do áudio
+            # Extrair as features do áudio
             features = extract_features(audio_file)
-            if len(features) != 20:
+            st.write(f"Forma das features extraídas: {features.shape}")  # Debug
+
+            if len(features) != 20:  # Verificar se temos as 20 features
                 st.error(f"Erro: Número inesperado de features ({len(features)}). Esperado: 20.")
             else:
                 # Escalonar as features
