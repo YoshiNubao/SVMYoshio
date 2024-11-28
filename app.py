@@ -7,11 +7,15 @@ import librosa
 # Função para extrair features de um áudio
 def extract_features(audio_file):
     y, sr = librosa.load(audio_file, duration=30)
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr)
-    features = np.hstack([np.mean(mfcc, axis=1), np.mean(chroma, axis=1), np.mean(spectral_contrast, axis=1)])
-    return features
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13) 
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr).mean(axis=1)  
+    spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr).mean(axis=1)  
+    features = np.hstack([
+        np.mean(mfcc, axis=1),    # Média dos 13 MFCCs
+        chroma,                   # 12 valores do Chroma
+        spectral_contrast         # 7 valores do Spectral Contrast
+    ])
+    return features[:20]
 
 # Carregar os modelos SVM e o escalonador
 models = {kernel: joblib.load(f"svm_model_{kernel}.pkl") for kernel in ["linear", "rbf", "poly", "sigmoid"]}
