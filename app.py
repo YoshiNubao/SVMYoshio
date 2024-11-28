@@ -3,9 +3,9 @@ import joblib
 import numpy as np
 import librosa
 
-# Carregar o modelo e o escalador
-model = joblib.load('svm_model_linear.pkl')
-scaler = joblib.load('scaler.pkl')
+# Carregar todos os modelos treinados
+models = {kernel: joblib.load(f"svm_model_{kernel}.pkl") for kernel in ["linear", "rbf", "poly", "sigmoid"]}
+scaler = joblib.load("scaler.pkl")
 
 def extract_features(audio_file):
     try:
@@ -45,21 +45,28 @@ gender = None
 if audio_file is not None:
     st.audio(audio_file, format="audio/wav")
     
-    # Extrair as features do áudio
-    features = extract_features(audio_file)
-    
-    if features is not None and len(features) == 20:
-        # Escalonar as features
-        features_scaled = scaler.transform([features])
-        
-        # Fazer a previsão
-        prediction = model.predict(features_scaled)
-        gender = "Masculino" if prediction[0] == 0 else "Feminino"
-        
-        # Mostrar o resultado
-        st.write(f"Features extraídas: {features}")
-        st.write(f"Features escalonadas: {features_scaled}")
-        st.success(f"Gênero classificado: **{gender}**")
-    else:
-        st.error("Erro ao processar o áudio. Certifique-se de que o áudio tenha 20 características.")
+    # Adicionar um selectbox para o kernel do modelo
+    kernel = st.selectbox("Escolha o kernel do modelo", ["linear", "rbf", "poly", "sigmoid"])
+    model = models[kernel]  # Escolher o modelo conforme o kernel selecionado
 
+    # Adicionar um botão para extrair features e prever
+    if st.button("Fazer Previsão"):
+        # Extrair as features do áudio
+        features = extract_features(audio_file)
+        
+        if features is not None and len(features) == 20:
+            # Escalonar as features
+            features_scaled = scaler.transform([features])
+            
+            # Fazer a previsão
+            prediction = model.predict(features_scaled)
+            gender = "Masculino" if prediction[0] == 0 else "Feminino"
+            
+            # Probabilidades (se suportadas)
+            if hasattr(model, "predict_proba"):
+                probabilities = model.predict_proba(features_scaled)
+                st.write(f"Probabilidades: Masculino: {probabilities[0][0]:.2f}, Feminino: {probabilities[0][1]:.2f}")
+            
+            st.success(f"Gênero classificado: **{gender}**")
+        else:
+            st.error("Erro ao processar o áudio. Certifique-se de que o áudio tenha 20 características.")
