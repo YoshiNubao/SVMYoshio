@@ -48,6 +48,10 @@ if audio_file is not None:
     # Extrair as features do áudio sempre que o arquivo for alterado
     features = extract_features(audio_file)
     
+    # Verifique as features extraídas
+    if features is not None:
+        st.write("Features extraídas:", features)
+    
     # Adicionar um selectbox para o kernel do modelo
     kernel = st.selectbox("Escolha o kernel do modelo", ["linear", "rbf", "poly", "sigmoid"])
     model = models[kernel]  # Escolher o modelo conforme o kernel selecionado
@@ -59,6 +63,8 @@ if audio_file is not None:
         
         # Fazer a previsão
         prediction = model.predict(features_scaled)
+        st.write("Previsão:", prediction)  # Verifique o valor da previsão
+        
         gender = "Masculino" if prediction[0] == 0 else "Feminino"
         
         # Probabilidades (se suportadas)
