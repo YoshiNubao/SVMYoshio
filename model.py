@@ -18,12 +18,21 @@ data = data.drop_duplicates()
 x = data.drop(columns=['label'])
 y = data['label'].apply(lambda x: 1 if x == 'male' else 0)  # Converter rótulos para binário
 
+# Dividir em treino e teste
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Verificar as estatísticas antes do escalonamento
+print("Estatísticas antes do escalonamento (treinamento):")
+print(x_train.describe())
 
 # Normalizar as features
 scaler = StandardScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
+
+# Verificar as estatísticas após o escalonamento
+print("\nEstatísticas após o escalonamento (treinamento):")
+print(pd.DataFrame(x_train_scaled).describe())
 
 # Listar os kernels que queremos testar
 kernels = ['linear', 'rbf', 'poly', 'sigmoid']
@@ -37,7 +46,6 @@ for kernel in kernels:
     # Fazer previsões no conjunto de teste
     y_pred = model.predict(x_test_scaled)
 
-
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred, target_names=["Female", "Male"], output_dict=True)
     report["accuracy"] = {"precision": accuracy, "recall": accuracy, "f1-score": accuracy, "support": len(y_test)}
@@ -49,7 +57,7 @@ for kernel in kernels:
                   f"Precision: {metrics['precision']:.2f} | " +
                   f"Recall: {metrics['recall']:.2f} | " +
                   f"F1-Score: {metrics['f1-score']:.2f} | " +
-                  f"Support: {metrics['support']}")
+                  f"Support: {metrics['support']}")  # Suporte representa o número de amostras na classe
         else:  # Para outros valores (não dicionários)
             print(f"{label.capitalize()}: {metrics}")
     print("="*40)  # Separador entre os kernels
