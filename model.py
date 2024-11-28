@@ -31,7 +31,7 @@ kernels = ['linear', 'rbf', 'poly', 'sigmoid']
 # Treinar o modelo e avaliar para cada kernel
 for kernel in kernels:
     # Criar e treinar o modelo
-    model = SVC(kernel=kernel)
+    model = SVC(kernel=kernel, probability=True)
     model.fit(x_train_scaled, y_train)
     
     # Fazer previsões no conjunto de teste
